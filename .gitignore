@@ -1,0 +1,7 @@
+# Everything the pipeline produces lives under one root, so there is a
+# single rule to get wrong rather than one per layer. Yahoo's terms do not
+# permit redistribution, and a committed archive is redistribution.
+data/
+__pycache__/
+*.pyc
+*.log
