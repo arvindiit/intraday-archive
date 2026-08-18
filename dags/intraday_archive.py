@@ -116,9 +116,15 @@ with DAG(
                       description="Seconds between requests. Below 2 the "
                                   "upstream refuses; 10 is safe but takes "
                                   "twelve hours for the full universe."),
-        "scope": Param("all", enum=["all", "pool"],
-                       description="Every liquid stock, or only tonight's "
-                                   "screen pool."),
+        # A dropdown with one entry is the honest version of a disabled
+        # button: the slot is visible in the form, and validation refuses
+        # anything not yet built. Kite Connect joins the enum when its
+        # implementation lands - the seam is extracted from the second
+        # source, not designed before it.
+        "source": Param("yahoo", enum=["yahoo"],
+                        description="Where bars come from. Kite Connect "
+                                    "planned; until then this is the only "
+                                    "valid value."),
     },
 ) as dag:
 
@@ -130,8 +136,9 @@ with DAG(
         task_id="fetch_bars",
         bash_command=(
             "cd %s && python3 -u bars_fetch.py "
-            "--{{ params.scope }} "
+            "--all "
             "--days-back {{ params.days_back }} "
+            "--source {{ params.source }} "
             "--pace {{ params.pace }}" % ARCHIVE
         ),
         execution_timeout=timedelta(hours=8),
