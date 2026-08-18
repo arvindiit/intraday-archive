@@ -77,6 +77,10 @@ default_args = {
 
 with DAG(
     dag_id="intraday_archive",
+    # The module docstring, rendered at the top of the DAG page in
+    # the UI - so the person looking at a red square reads why the
+    # graph is shaped this way without opening the source.
+    doc_md=__doc__,
     description="Fetch NSE intraday bars before the upstream forgets them",
     # Timezone-aware on purpose. Airflow schedules in UTC unless the
     # start_date carries a zone - so a bare datetime here would fire this

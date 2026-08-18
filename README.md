@@ -20,6 +20,47 @@ dags/             the nightly pipeline, as an Airflow DAG
 deploy/           a one-shot Airflow install (SQLite, loopback-only)
 ```
 
+## What using it looks like
+
+**Day one:**
+
+```bash
+git clone https://github.com/arvindiit/intraday-archive
+pip install duckdb          # a library, not a server - nothing to run or configure
+./bars-bootstrap.sh         # hours; fills data/ as deep as the upstream allows
+```
+
+**Every night after — pick one:**
+
+```bash
+30 19 * * 1-5 cd ~/intraday-archive && ./bars-daily.sh        # cron
+# or run deploy/airflow-setup.sh once, and the DAG does the same
+# with retries, logs and a UI
+```
+
+The archive grows by one session a day, and each night re-fetches the
+last three so a failed night heals itself. Nothing to babysit.
+
+**Reading what you have kept:**
+
+```bash
+python3 bars_read.py TCS --days 7           # from a shell
+```
+```python
+from bars_read import load, window          # from your own code
+```
+
+And because silver is **plain parquet**, every data tool reads it without
+this repo's help:
+
+```python
+import pandas as pd
+pd.read_parquet("data/silver/bars/interval=1m/date=2026-08-18/part.parquet")
+```
+
+DuckDB is how this pipeline writes and queries; it is not a gatekeeper on
+your data. The files are the product.
+
 ## The decisions
 
 **1. Land the raw response before touching it.** The first version of this
