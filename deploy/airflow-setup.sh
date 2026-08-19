@@ -102,6 +102,15 @@ ln -sfn "$DAGS_SRC/intraday_archive.py" "$AIRFLOW_HOME/dags/intraday_archive.py"
 # copy, or they would start with airflow.cfg's defaults and quietly ignore
 # every choice made here.
 cat > "$AIRFLOW_HOME/env" <<ENV
+# PATH is the line that cost a night. SequentialExecutor runs each task by
+# spawning the bare command "airflow" - not the full path the unit starts
+# the scheduler with - and systemd's default PATH does not include the
+# venv. The scheduler started cleanly, queued tasks, then crashed with
+# FileNotFoundError the moment it tried to execute one, and systemd
+# restarted it into the same wall every ten seconds all night. A service
+# manager's environment is nobody's shell: it inherits nothing you did
+# not write down.
+PATH=$AIRFLOW_HOME/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 AIRFLOW_HOME=$AIRFLOW_HOME
 ARCHIVE_DIR=$ARCHIVE_DIR
 AIRFLOW__CORE__LOAD_EXAMPLES=False
