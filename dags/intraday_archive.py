@@ -47,7 +47,6 @@ import pendulum
 
 from airflow import DAG
 from airflow.models.param import Param
-from airflow.utils.trigger_rule import TriggerRule
 
 # Airflow 3 moved the built-in operators into the standard provider, and
 # Airflow 2 does not support Python 3.13 - so which of these works depends
@@ -187,12 +186,17 @@ with DAG(
     )
 
     # -------------------------------------------------------------- summary
-    # ALL_DONE, not the default. corp_actions is allowed to fail without
-    # taking the night with it, and the default rule would mark this
-    # upstream_failed and hide the fact that the bars arrived fine.
+    # DEFAULT trigger rule, and that is the fix for a night this DAG lied
+    # about. It used ALL_DONE - "run whatever happened" - to keep a
+    # corp_actions failure from failing the night. But corp_actions ends
+    # in "|| echo" and cannot fail, so the rule defended against nothing;
+    # what it actually did was run summary after every disaster, and since
+    # summary is the only leaf and Airflow colours a run by its leaves, a
+    # run whose FETCH failed three times was reported green. A tolerant
+    # join over tasks that cannot fail is not tolerance; it is a painted-
+    # over warning light.
     summary = EmptyOperator(
         task_id="summary",
-        trigger_rule=TriggerRule.ALL_DONE,
     )
 
     fetch_bars >> verify >> replicate >> summary
