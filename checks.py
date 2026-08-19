@@ -189,13 +189,18 @@ def run(interval="1m", only=None):
     # walked the alphabet until 18:35, so stocks fetched before the close
     # hold half a session and stocks fetched after hold all of it - and
     # every other check passed.
+    # Minute-of-day from raw epoch arithmetic, NOT from rendering a
+    # timestamp. date_part() on a timestamp answers in the SESSION
+    # timezone - so on a box set to Asia/Kolkata the 330-minute offset was
+    # added twice, every stock appeared to trade until nine at night, and
+    # this check waved through the exact truncated session it was written
+    # to catch. The epoch never lies about anything: +19800s is IST, and
+    # modulo a day is the wall clock, on any machine.
     reach = q("SELECT date, "
               "  count(*) AS stocks, "
               "  sum(CASE WHEN last_m >= %d THEN 1 ELSE 0 END) AS reaching "
               "FROM (SELECT symbol, date, "
-              "        max(date_part('hour', to_timestamp(ts) + INTERVAL 330 MINUTE) * 60 "
-              "          + date_part('minute', to_timestamp(ts) + INTERVAL 330 MINUTE)) "
-              "        AS last_m "
+              "        max(((ts + 19800) %% 86400) // 60) AS last_m "
               "      FROM %s %s GROUP BY 1,2) "
               "GROUP BY 1 ORDER BY 1" % (REACH_BY_M, src, where))
     short = [(d, 100.0 * r / n) for d, n, r in reach
