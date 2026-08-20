@@ -127,13 +127,12 @@ with DAG(
                                   "twelve hours for the full universe."),
         # A dropdown with one entry is the honest version of a disabled
         # button: the slot is visible in the form, and validation refuses
-        # anything not yet built. Kite Connect joins the enum when its
-        # implementation lands - the seam is extracted from the second
-        # source, not designed before it.
+        # anything not yet built - the seam is extracted from the second
+        # real source when one lands, not designed before it.
         "source": Param("yahoo", enum=["yahoo"],
-                        description="Where bars come from. Kite Connect "
-                                    "planned; until then this is the only "
-                                    "valid value."),
+                        description="Where bars come from. Only one source "
+                                    "is implemented; the flag is the slot "
+                                    "for the next."),
     },
 ) as dag:
 

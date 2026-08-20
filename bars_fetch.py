@@ -341,8 +341,8 @@ def main():
     # One choice today, on purpose. The seam for a second source exists -
     # bronze is already partitioned by source, and only fetch_raw() and
     # parse() know anything about Yahoo - but the interface gets extracted
-    # when the second implementation (Kite Connect) lands, not designed
-    # speculatively before it. Until then this flag is the visible slot.
+    # when a second real implementation lands, not designed speculatively
+    # before it. Until then this flag is the visible slot.
     ap.add_argument("--source", choices=["yahoo"], default="yahoo",
                     help="where bars come from (only yahoo yet)")
     ap.add_argument("--limit", type=int)
