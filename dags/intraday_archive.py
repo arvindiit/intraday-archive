@@ -60,6 +60,16 @@ except ImportError:                         # Airflow 2.x
     from airflow.operators.bash import BashOperator
     from airflow.operators.empty import EmptyOperator
 
+# The SYSTEM interpreter, by absolute path, and the story is a warning.
+# Fixing "systemd could not find the airflow command" meant putting the
+# venv first on the unit's PATH - which silently repointed every task's
+# bare "python3" at the venv interpreter, where duckdb does not exist.
+# The nightly fetch then died in 0.4 seconds, twice, out of retries,
+# and a trading day nearly aged out of the upstream's seven-day window.
+# One PATH, two programs, opposite needs: the executor wants the venv,
+# the tasks want the system. Absolute paths take PATH out of the game.
+PYTHON = os.environ.get("ARCHIVE_PYTHON", "/usr/bin/python3")
+
 ARCHIVE = os.environ.get("ARCHIVE_DIR", "/opt/intraday-archive")
 
 default_args = {
@@ -134,7 +144,7 @@ with DAG(
     fetch_bars = BashOperator(
         task_id="fetch_bars",
         bash_command=(
-            "cd %s && python3 -u bars_fetch.py "
+            "cd %s && %s -u bars_fetch.py "
             "--all "
             "--days-back {{ params.days_back }} "
             "--source {{ params.source }} "
@@ -152,9 +162,9 @@ with DAG(
     corp_actions = BashOperator(
         task_id="corp_actions",
         bash_command=(
-            "cd %s && python3 -u corp_actions.py || "
+            "cd %s && %s -u corp_actions.py || "
             "echo 'nse unavailable - splits still come from the bars fetch'"
-            % ARCHIVE
+            % (ARCHIVE, PYTHON)
         ),
         execution_timeout=timedelta(minutes=15),
     )
@@ -164,7 +174,7 @@ with DAG(
     # running it again produces the same answer more slowly.
     verify = BashOperator(
         task_id="verify",
-        bash_command="cd %s && python3 -u checks.py" % ARCHIVE,
+        bash_command="cd %s && %s -u checks.py" % (ARCHIVE, PYTHON),
         retries=0,
         execution_timeout=timedelta(minutes=15),
     )
