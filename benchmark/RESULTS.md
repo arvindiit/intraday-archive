@@ -41,8 +41,21 @@ TOTAL          0.03s    8.30s     278x
 At 173 MB, **Spark's startup alone is ~196x DuckDB's entire run** -
 startup plus all three queries.
 
-_pending: the production box (Ubuntu VPS, 12 GB, the real archive) -
-same script, paste below._
+**Production box** — Ubuntu VPS (Contabo, Mumbai), 12 GB, Python 3.12,
+the REAL archive: 51 parquet files, 98 MB, NSE 1-minute and 5-minute
+bars back to June.
+
+```
+              duckdb    spark     ratio
+startup        0.02s   11.55s     624x
+scan           0.13s    3.89s      31x
+point          0.02s    0.53s      30x
+resample       0.04s    0.80s      18x
+TOTAL          0.21s   16.76s      81x
+```
+
+At 98 MB of real market data, **Spark's startup alone is 56x DuckDB's
+entire run**. Two machines, two datasets, one verdict.
 
 ## The reading
 
